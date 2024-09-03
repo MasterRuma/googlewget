@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive to Wget</title>
+    <style>
+        /* 기본 스타일 설정 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* 좌우 스크롤 방지 */
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            word-wrap: break-word;
+            /* 긴 제목 텍스트가 화면을 넘지 않도록 */
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px;
+            text-align: center;
+            box-sizing: border-box;
+            /* 전체 너비에 padding 포함 */
+        }
+
+        input[type="text"] {
+            width: calc(100% - 24px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 5px rgba(0, 86, 179, 0.3);
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            background-color: #0056b3;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-sizing: border-box;
+            /* 전체 너비에 padding 포함 */
+        }
+
+        button:hover {
+            background-color: #004494;
+        }
+
+        #result,
+        #warning {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            overflow: auto;
+            text-align: left;
+            word-wrap: break-word;
+            box-sizing: border-box;
+            /* 전체 너비에 padding 포함 */
+        }
+
+        #result {
+            border-color: #0056b3;
+            background-color: #e0f7ff;
+            max-height: 300px;
+        }
+
+        #warning {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .message {
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            /* 버튼이 줄 바꿈되도록 */
+        }
+
+        /* 모바일 반응형 디자인 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+
+            input[type="text"],
+            button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: stretch;
+                /* 버튼을 가로 전체에 맞게 */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Google Drive to Wget</h1>
+    <div class="container">
+        <input type="text" id="address" placeholder="Enter Your Google Drive URL" />
+        <input type="text" id="filename" placeholder="Enter Your File Name" />
+        <div class="button-container">
+            <button onclick="generateCommand()">Generate Command</button>
+            <button onclick="copyToClipboard()">Copy to Clipboard</button>
+        </div>
+        <div id="result"></div>
+        <div id="warning"></div>
+    </div>
+
+    <script>
+        function generateCommand() {
+            try {
+                const address = document.getElementById("address").value.trim();
+                const filename = document.getElementById("filename").value.trim();
+
+                if (!address.includes('https://drive.google.com/file/d/')) {
+                    throw new Error("주소가 바르지 않습니다.");
+                }
+                if (!address || !filename) {
+                    throw new Error("파일 이름과 구글 드라이브 주소를 모두 입력해 주세요.");
+                }
+
+                const addressSlice = address.split("/")[5];
+                const finalCommand = `wget --load-cookies ~/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies ~/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=${addressSlice}' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1\\n/p')&id=${addressSlice}" -O ${filename} && rm -rf ~/cookies.txt`;
+
+                document.getElementById("result").innerHTML = `<pre>${finalCommand}</pre>`;
+                document.getElementById("warning").innerHTML = '';
+            } catch (err) {
+                document.getElementById("warning").innerHTML = `오류: ${err.message}`;
+                document.getElementById("result").innerHTML = '';
+            }
+        }
+
+        function copyToClipboard() {
+            const copy = document.getElementById("result").innerText;
+            navigator.clipboard.writeText(copy).then(() => {
+                alert("복사 완료!");
+            }).catch(err => {
+                alert("복사 실패: " + err);
+            });
+        }
+    </script>
+</body>
+
+</html>
